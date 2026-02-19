@@ -146,3 +146,130 @@ int main() {
     printf("\nTotal Profit: %d", totalProfit);
     return 0;
 }
+
+// Q5
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX 100
+
+struct Node {
+    char ch;
+    int freq;
+    struct Node *left, *right;
+};
+
+struct Heap {
+    int size;
+    struct Node **arr;
+};
+
+struct Node* makeNode(char ch, int freq) {
+    struct Node* n = malloc(sizeof(struct Node));
+    n->ch = ch;
+    n->freq = freq;
+    n->left = NULL;
+    n->right = NULL;
+    return n;
+}
+
+struct Heap* makeHeap(int n) {
+    struct Heap* h = malloc(sizeof(struct Heap));
+    h->size = 0;
+    h->arr = malloc(n * sizeof(struct Node*));
+    return h;
+}
+
+void swap(struct Node **a, struct Node **b) {
+    struct Node *t = *a;
+    *a = *b;
+    *b = t;
+}
+
+void heapify(struct Heap *h, int i) {
+    int s = i;
+    int l = 2*i + 1;
+    int r = 2*i + 2;
+
+    if (l < h->size && h->arr[l]->freq < h->arr[s]->freq)
+        s = l;
+    if (r < h->size && h->arr[r]->freq < h->arr[s]->freq)
+        s = r;
+
+    if (s != i) {
+        swap(&h->arr[s], &h->arr[i]);
+        heapify(h, s);
+    }
+}
+
+struct Node* popMin(struct Heap *h) {
+    struct Node* x = h->arr[0];
+    h->arr[0] = h->arr[h->size - 1];
+    h->size--;
+    heapify(h, 0);
+    return x;
+}
+
+void push(struct Heap *h, struct Node* n) {
+    int i = h->size++;
+    while (i && n->freq < h->arr[(i - 1) / 2]->freq) {
+        h->arr[i] = h->arr[(i - 1) / 2];
+        i = (i - 1) / 2;
+    }
+    h->arr[i] = n;
+}
+
+void buildHeap(struct Heap *h) {
+    for (int i = (h->size - 1) / 2; i >= 0; i--)
+        heapify(h, i);
+}
+
+struct Node* buildTree(char ch[], int freq[], int n) {
+    struct Heap *h = makeHeap(n);
+
+    for (int i = 0; i < n; i++)
+        h->arr[h->size++] = makeNode(ch[i], freq[i]);
+
+    buildHeap(h);
+
+    while (h->size > 1) {
+        struct Node* a = popMin(h);
+        struct Node* b = popMin(h);
+        struct Node* p = makeNode('$', a->freq + b->freq);
+        p->left = a;
+        p->right = b;
+        push(h, p);
+    }
+
+    return popMin(h);
+}
+
+void showCodes(struct Node* root, int code[], int len) {
+    if (!root) return;
+
+    if (!root->left && !root->right) {
+        printf("%c: ", root->ch);
+        for (int i = 0; i < len; i++)
+            printf("%d", code[i]);
+        printf("\n");
+    }
+
+    code[len] = 0;
+    showCodes(root->left, code, len + 1);
+
+    code[len] = 1;
+    showCodes(root->right, code, len + 1);
+}
+
+int main() {
+    char ch[] = {'a','b','c','d','e','f'};
+    int freq[] = {5,9,12,13,16,45};
+    int n = 6;
+
+    struct Node* root = buildTree(ch, freq, n);
+
+    int code[MAX];
+    showCodes(root, code, 0);
+
+    return 0;
+}
